@@ -39,7 +39,7 @@ namespace fast_pow_n {
 
 template<std::unsigned_integral T>
 T ilog(const T base, const T x) {
-    if (!x || !base || base == 1)
+    if (!x || base <= 1)
         throw std::exception{};
     if (x < base)
         return 0;
@@ -63,5 +63,18 @@ constexpr T isqrt(const T x) {
         return x;
     const T res = isqrt(x >> 2) << 1, gres = res | 1;
     return gres * gres <= x ? gres : res;
+}
+
+template<std::integral T>
+constexpr T difference(T x, T y) {
+    return x < y ? y - x : x - y;
+}
+
+constexpr double clamped_asin(const double x) {
+    return std::asin(std::clamp(x, -1., 1.));
+}
+
+constexpr double clamped_acos(const double x) {
+    return std::acos(std::clamp(x, -1., 1.));
 }
 #endif //MATH_H

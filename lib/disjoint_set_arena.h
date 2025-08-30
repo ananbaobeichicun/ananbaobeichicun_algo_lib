@@ -19,7 +19,7 @@ struct disjoint_set {
         return _size[root(n)];
     }
 
-    bool merge(const size_t x, const size_t y) {
+    bool link(const size_t x, const size_t y) {
         size_t rx = root(x), ry = root(y);
         if (rx == ry)
             return false;
