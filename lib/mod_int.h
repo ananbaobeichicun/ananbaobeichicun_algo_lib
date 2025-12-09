@@ -19,7 +19,7 @@ struct mod_int {
     [[nodiscard]] constexpr mod_int inv() const {
         if (data == 0)
             throw std::exception{};
-        return pow(*this, MOD - 2);
+        return qpow(*this, MOD - 2);
     }
 
     std::pair<T, T> guess_ratio(T n) const {
@@ -187,7 +187,7 @@ DEFINE_ASSIGNMENT_OPERATOR(*, *=)
 DEFINE_ASSIGNMENT_OPERATOR(/, /=)
 
 template<std::unsigned_integral T, T MOD>
-constexpr mod_int<T, MOD> pow(mod_int<T, MOD> x, T y) {
+constexpr mod_int<T, MOD> qpow(mod_int<T, MOD> x, T y) {
     mod_int<T, MOD> ans = 1;
     while (y) {
         if (y & 1)
