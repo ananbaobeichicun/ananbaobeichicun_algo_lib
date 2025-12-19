@@ -105,5 +105,23 @@ public:
 
         return ansl + ansr;
     }
+
+    // untested!!
+    void resolve_all_tags() {
+        for (size_t i = 1; i < _size; ++i)
+            push_down(i);
+        for (size_t i = _size - 1; i; --i)
+            push_up(i);
+    }
+
+    // untested!!
+    G &get_unchecked(const size_t idx) {
+        return data[idx + _size];
+    }
+
+    // untested!!
+    const G &get_unchecked(const size_t idx) const {
+        return data[idx + _size];
+    }
 };
 #endif //ZKW_SEG_TREE_H
