@@ -19,12 +19,9 @@ struct forward_HLD {
     std::vector<size_t> head, dfn;
     zkw_seg_tree<T, G> _seg_tree;
 
-    explicit forward_HLD(std::vector<std::vector<size_t> > &&edges_,
-                 std::vector<G> &&data) : edges(std::move(edges_)),
-                                          _size(edges.size()), depth(_size),
-                                          fa(_size), size(_size, 1uz),
-                                          heavy_child(_size, ~0uz), head(_size),
-                                          dfn(_size), _seg_tree(0uz) {
+    explicit forward_HLD(std::vector<std::vector<size_t> > edges_, std::vector<G> data) : edges(std::move(edges_)),
+        _size(edges.size()), depth(_size), fa(_size), size(_size, 1uz), heavy_child(_size, ~0uz), head(_size),
+        dfn(_size), _seg_tree(0uz) {
         auto dfs1 = [&](auto &&self, const size_t cur, const size_t from) -> void {
             depth[cur] = ~from ? depth[from] + 1 : 0;
             fa[cur] = ~from ? from : ~0uz;
