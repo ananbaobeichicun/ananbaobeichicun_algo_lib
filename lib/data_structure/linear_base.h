@@ -3,6 +3,7 @@
 #include <numeric>
 #include <algorithm>
 #include <stdexcept>
+#include <array>
 
 template<std::unsigned_integral T>
 struct linear_base {
@@ -25,11 +26,11 @@ struct linear_base {
         std::ranges::fill(data, 0);
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const {
         return !std::ranges::any_of(data, std::identity{});
     }
 
-    bool contains(T x) const {
+    [[nodiscard]] bool contains(T x) const {
         size_t lg = SIZE - 1;
         while (true) {
             while (~lg && !(1ull << lg & x))
@@ -66,7 +67,7 @@ struct linear_base {
         return std::reduce(data.begin(), data.end(), 0ull, std::bit_xor{});
     }
 
-    T query_kth_min(size_t k) const {
+    [[nodiscard]] T query_kth_min(size_t k) const {
         T ans = 0;
         auto it = data.begin();
         for (; k; k >>= 1) {
