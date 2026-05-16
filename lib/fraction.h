@@ -2,34 +2,32 @@
 #define FRACTION_H
 #include <iostream>
 #include <numeric>
-#include <cassert>
 
-template<std::integral T> //todo 加强约束为带符号数
+template<std::integral T>
 class fraction {
 public:
-    T numerator, denominrator;
+    T numerator, denominator;
 
-    explicit fraction(T numerator = 0, T denominrator = 1, const bool require_reduce = true): numerator(numerator),
-        denominrator(denominrator) {
+    explicit fraction(T numerator = 0, T denominator = 1, const bool require_reduce = true): numerator(numerator),
+        denominator(denominator) {
         if (require_reduce)
             reduce();
     }
 
     fraction &reduce() {
-        // assert(denominrator);
-        T res = std::gcd(numerator, denominrator);
+        T res = std::gcd(numerator, denominator);
         numerator /= res;
-        denominrator /= res;
-        if (denominrator < 0) {
+        denominator /= res;
+        if (denominator < 0) {
             numerator *= -1;
-            denominrator *= -1;
+            denominator *= -1;
         }
         return *this;
     }
 
     // NOLINTNEXTLINE(*-explicit-constructor)
     constexpr operator double() const {
-        return static_cast<double>(numerator) / denominrator;
+        return static_cast<double>(numerator) / denominator;
     }
 
     constexpr explicit operator bool() const {
