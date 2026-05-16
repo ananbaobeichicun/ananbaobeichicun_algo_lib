@@ -32,32 +32,48 @@ void get_factors(T n, It it) {
         *it++ = n;
 }
 
-template <std::unsigned_integral T, size_t N>
-struct euler_sieve {
-    std::array<T, N> least_factor{}, euler_phi{}, mu{};
-    std::vector<T> primes;
+struct empty_dummy {
+};
 
-    explicit euler_sieve (const T n) : least_factor(n + 1) {
-        euler_phi[1] = 1;
-        mu[1] = 1;
-        for (T i = 2; i <= n; ++i) {
+using ll = long long;
+using ull = unsigned long long;
+
+template<size_t N, bool enable_phi = false, bool enable_mu = false>
+struct euler_sieve {
+    std::array<ull, N + 1> least_factor;
+    std::vector<ull> primes;
+    [[no_unique_address]] std::conditional_t<enable_phi, std::array<ull, N + 1>, empty_dummy> phi;
+    [[no_unique_address]] std::conditional_t<enable_mu, std::array<ll, N + 1>, empty_dummy> mu;
+
+    constexpr explicit euler_sieve() {
+        if constexpr (enable_phi)
+            phi[1] = 1;
+        if constexpr (enable_mu)
+            mu[1] = 1;
+        for (ull i = 2; i <= N; ++i) {
             if (!least_factor[i]) {
                 least_factor[i] = i;
-                euler_phi[i] = i - 1;
-                mu[i] = -1;
+                if constexpr (enable_phi)
+                    phi[i] = i - 1;
+                if constexpr (enable_mu)
+                    mu[i] = -1;
                 primes.push_back(i);
             }
-            for (const T p: primes) {
-                if (p * i > n)
+            for (const ull p: primes) {
+                if (p * i > N)
                     break;
                 least_factor[p * i] = p;
                 if (!(i % p)) {
-                    euler_phi[p * i] = euler_phi[i] * p;
-                    mu[p * i] = 0;
+                    if constexpr (enable_phi)
+                        phi[p * i] = phi[i] * p;
+                    if constexpr (enable_mu)
+                        mu[p * i] = 0;
                     break;
                 }
-                euler_phi[p * i] = euler_phi[i] * (p - 1);
-                mu[p * i] = -mu[i];
+                if constexpr (enable_phi)
+                    phi[p * i] = phi[i] * (p - 1);
+                if constexpr (enable_mu)
+                    mu[p * i] = -mu[i];
             }
         }
     }
