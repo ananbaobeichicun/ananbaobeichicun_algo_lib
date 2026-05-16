@@ -4,10 +4,10 @@
 #include <numeric>
 #include <vector>
 
-struct disjoint_set {
+struct union_find {
     std::vector<size_t> par, _size;
 
-    explicit disjoint_set(const size_t n): par(n), _size(n, 1) {
+    explicit union_find(const size_t n): par(n), _size(n, 1) {
         std::iota(par.begin(), par.end(), 0);
     }
 
