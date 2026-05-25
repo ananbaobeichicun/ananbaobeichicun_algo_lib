@@ -1,169 +1,157 @@
 #ifndef MATRIX_H
 #define MATRIX_H
+#include <algorithm>
 #include <vector>
-#include <array>
-#include <functional>
+#include <concepts>
+#include <ranges>
+#include <cassert>
 
-template<std::integral T, size_t height, size_t width>
-class matrix {
-public:
-    std::array<std::array<T, width>, height> data;
+#include "concepts/algebra_concepts.h"
 
-    explicit matrix(const T initial = 0) {
+template<std::ranges::forward_range R>
+    requires std::ranges::forward_range<std::ranges::range_value_t<R> >
+bool inner_same_length(const R &r) {
+    auto beg = std::ranges::begin(r);
+    auto end = std::ranges::end(r);
+
+    if (beg == end)
+        return true;
+
+    auto expected_len = std::ranges::distance(*beg);
+
+    return std::ranges::all_of(r, [&](const std::ranges::range_value_t<R> &rr) {
+        return std::ranges::distance(rr) == expected_len;
+    });
+}
+
+template<semiring T>
+struct matrix {
+    using value_type = T;
+
+    size_t n, m;
+    std::vector<std::vector<T> > data;
+
+    explicit matrix(const size_t n, const size_t m) : n(n), m(m), data(n, std::vector<T>(m)) {
         for (auto &i: data)
             for (auto &j: i)
-                j = initial;
+                j = T::zero();
     }
 
-    matrix(const std::initializer_list<std::initializer_list<T> > &lis) {
-        for (size_t i = 0; i < height; ++i)
-            for (size_t j = 0; j < width; ++j)
-                data[i][j] = lis[i][j];
+    static matrix scalar(const size_t n, const T &x = T::identity()) {
+        matrix ans(n, n);
+        for (size_t i = 0; i < n; ++i)
+            ans.data[i][i] = x;
+        return ans;
     }
 
-    matrix(std::initializer_list<std::initializer_list<T> > &&lis) {
-        for (auto i = lis.begin(); i < lis.begin() + height; ++i)
-            for (auto j = i->begin(); j < i->begin() + width; ++j)
-                data[i - lis.begin()][j - i->begin()] = std::move(*j);
+    explicit matrix(std::vector<std::vector<T> > r) : n(r.size()), m(r.empty() ? 0 : r[0].size()), data(std::move(r)) {
+        assert(inner_same_length(r));
     }
 
-    matrix(const std::initializer_list<std::array<T, width> > &lis) {
-        for (size_t i = 0; i < height; ++i)
-            data[i] = std::data(lis)[i];
+    template<std::ranges::forward_range R>
+        requires std::ranges::forward_range<std::ranges::range_value_t<R> >
+                 && std::same_as<T, std::ranges::range_value_t<std::ranges::range_value_t<R> > >
+    explicit matrix(R r) : matrix(std::ranges::distance(r),
+                                  std::ranges::empty(r) ? 0 : std::ranges::distance(*std::ranges::begin(r))) {
+        assert(inner_same_length(r));
+        std::ranges::for_each(r, [&, it = data.begin()](const auto &rr) mutable {
+            std::ranges::copy(rr, it++->begin());
+        });
     }
 
-    matrix(std::initializer_list<std::vector<T> > &&lis) {
-        for (size_t i = 0; i < height; ++i)
-            data[i] = std::move(lis[i]);
+    matrix(std::initializer_list<std::initializer_list<T> > list)
+        : matrix(list.size(), std::ranges::empty(list) ? 0 : list.begin()->size()) {
+        assert(inner_same_length(list));
+        auto it = data.begin();
+        for (const auto &row: list)
+            std::ranges::copy(row, it++->begin());
     }
 
-    explicit matrix(const std::array<std::array<T, width>, height> &lis) : data(lis) {
-    }
-
-    explicit matrix(std::array<std::array<T, width>, height> &&lis): data(std::move(lis)) {
-    }
-
-    std::array<T, width> &operator[](size_t i) {
+    const std::vector<T> &operator[](const size_t i) const {
         return data[i];
     }
 
-    const std::array<T, width> &operator[](size_t i) const {
+    std::vector<T> &operator[](const size_t i) {
         return data[i];
+    }
+
+    T &operator[](const size_t i, const size_t j) {
+        return data[i][j];
+    }
+
+    const T &operator[](const size_t i, const size_t j) const {
+        return data[i][j];
     }
 
     template<typename Fn>
-        requires std::invocable<Fn, T>
+        requires std::invocable<Fn, const T &> && std::same_as<std::invoke_result_t<Fn, const T &>, T>
     matrix map(Fn fun) const {
-        matrix ans;
-        for (size_t i = 0; i < height; ++i)
-            for (size_t j = 0; j < width; ++j)
+        matrix ans(n, m);
+        for (size_t i = 0; i < n; ++i)
+            for (size_t j = 0; j < m; ++j)
                 ans.data[i][j] = fun(data[i][j]);
         return ans;
     }
-};
 
-template<std::integral T, size_t a>
-class square_matrix : public matrix<T, a, a> {
-public:
-    using matrix<T, a, a>::matrix;
-
-    // ReSharper disable once CppNonExplicitConvertingConstructor
-    // NOLINTNEXTLINE(*-explicit-constructor)
-    square_matrix(const matrix<T, a, a> &m) : matrix<T, a, a>(m) {
-    }
-
-    // ReSharper disable once CppNonExplicitConvertingConstructor
-    // NOLINTNEXTLINE(*-explicit-constructor)
-    square_matrix(matrix<T, a, a> &&m) noexcept: matrix<T, a, a>(std::move(m)) {
-    }
-
-    square_matrix map(std::function<T(T)> fun) const {
-        square_matrix ans;
-        for (size_t i = 0; i < a; ++i)
-            for (size_t j = 0; j < a; ++j)
-                ans[i][j] = fun((*this)[i][j]);
+    template<typename Fn>
+        requires std::invocable<Fn, const T &, const T &>
+                 && std::same_as<std::invoke_result_t<Fn, const T &, const T &>, T>
+    friend matrix zip(const matrix &x, const matrix &y, Fn fn) {
+        assert(x.n == y.n && x.m == y.m);
+        matrix ans(x.n, x.m);
+        for (size_t i = 0; i < x.n; ++i)
+            for (size_t j = 0; j < x.m; ++j)
+                ans[i][j] = fn(x[i][j], y[i][j]);
         return ans;
     }
 
-    static constexpr square_matrix identity() {
-        square_matrix ans;
+    friend matrix operator+(const matrix &x) {
+        return x;
+    }
+
+    template<ring U>
+    friend matrix<U> operator-(const matrix<U> &x) {
+        return x.map([](const T &xx) { return -xx; });
+    }
+
+    friend matrix operator+(const matrix &x, const matrix &y) {
+        assert(x.n == y.n && x.m == y.m);
+        return zip(x, y, std::plus<T>{});
+    }
+
+    friend matrix &operator+=(matrix &x, const matrix &y) {
+        return x = x + y;
+    }
+
+    template<ring U>
+    friend matrix<U> operator-(const matrix<U> &x, const matrix<U> &y) {
+        assert(x.n == y.n && x.m == y.m);
+        return zip(x, y, std::minus<U>{});
+    }
+
+    friend matrix &operator-=(matrix &x, const matrix &y) {
+        return x = x + y;
+    }
+
+    friend matrix operator*(const matrix &x, const matrix &y) {
+        assert(x.m == y.n);
+
+        const size_t a = x.n, b = x.m, c = y.m;
+        matrix ans(x.n, y.m);
         for (size_t i = 0; i < a; ++i)
-            ans[i][i] = 1;
+            for (size_t j = 0; j < c; ++j)
+                for (size_t k = 0; k < b; ++k)
+                    ans[i][j] += x[i][k] * y[k][j];
         return ans;
     }
+
+    friend matrix operator*(const T &scale, const matrix &x) {
+        return x.map([scale](T num) { return scale * num; });
+    }
+
+    friend matrix &operator*=(matrix &x, const matrix &y) {
+        return x = x * y;
+    }
 };
-
-template<std::integral T, size_t height, size_t width>
-matrix<T, height, width> zip(const matrix<T, height, width> &x, const matrix<T, height, width> &y,
-                             std::function<T(T, T)> fn) {
-    matrix<T, height, width> ans;
-    for (size_t i = 0; i < height; ++i)
-        for (size_t j = 0; j < width; ++j)
-            ans[i][j] = fn(x[i][j], y[i][j]);
-    return ans;
-}
-
-template<std::integral T, size_t height, size_t width>
-matrix<T, height, width> operator+(const matrix<T, height, width> &x, const matrix<T, height, width> &y) {
-    return zip(x, y, std::plus<T>{});
-}
-
-template<std::integral T, size_t height, size_t width>
-matrix<T, height, width> operator-(const matrix<T, height, width> &x, const matrix<T, height, width> &y) {
-    return zip(x, y, std::minus<T>{});
-}
-
-template<std::integral T, size_t a, size_t b, size_t c>
-matrix<T, a, c> operator*(const matrix<T, a, b> &x, const matrix<T, b, c> &y) {
-    matrix<T, a, c> ans;
-    for (size_t i = 0; i < a; ++i)
-        for (size_t j = 0; j < c; ++j)
-            for (size_t k = 0; k < b; ++k)
-                ans[i][j] += x[i][k] * y[k][j];
-    return ans;
-}
-
-template<std::integral T, size_t a, size_t b, size_t c>
-matrix<T, a, c> mod_times(const matrix<T, a, b> &x, const matrix<T, b, c> &y, T mod) {
-    matrix<T, a, c> ans;
-    for (size_t i = 0; i < a; ++i)
-        for (size_t j = 0; j < c; ++j)
-            for (size_t k = 0; k < b; ++k)
-                ans[i][j] = (ans[i][j] + x[i][k] * y[k][j] % mod) % mod;
-    return ans;
-}
-
-template<std::integral T, size_t a>
-square_matrix<T, a> operator*(const square_matrix<T, a> &x, const square_matrix<T, a> &y) {
-    return x * y;
-}
-
-template<std::integral T, size_t a>
-square_matrix<T, a> mod_times(const square_matrix<T, a> &x, const square_matrix<T, a> &y, T mod) {
-    return mod_times<T, a, a, a>(x, y, mod);
-}
-
-template<std::integral T, size_t a>
-square_matrix<T, a> operator%(const square_matrix<T, a> &x, T mod) {
-    return x.map([mod](T num) { return num % mod; });
-}
-
-template<std::integral T, size_t a>
-square_matrix<T, a> operator*(const square_matrix<T, a> &x, T scale) {
-    return x.map([scale](T num) { return num * scale; });
-}
-
-// using ull = unsigned long long;
-//
-// template<typename T, size_t a>
-// square_matrix<T, a> matrix_fast_mod_pow(square_matrix<T, a> m, ull b, T mod) {
-//     auto ans = square_matrix<T, a>::identity();
-//     for (; b; b >>= 1) {
-//         if (b & 1)
-//             ans = mod_times(ans, m, mod);
-//         m = mod_times(m, m, mod);
-//     }
-//     return ans;
-// }
 
 #endif //MATRIX_H
