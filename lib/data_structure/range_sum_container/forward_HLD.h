@@ -21,28 +21,30 @@ struct forward_HLD {
     explicit forward_HLD(std::vector<std::vector<size_t> > edges_, std::vector<G> data) : edges(std::move(edges_)),
         _size(edges.size()), depth(_size), fa(_size), size(_size, 1uz), heavy_child(_size, ~0uz), head(_size),
         dfn(_size), _seg_tree(0uz) {
-        [&](this auto &&self, const size_t cur, const size_t from) -> void {
+        auto dfs1 = [&](auto &&self, const size_t cur, const size_t from) -> void {
             depth[cur] = ~from ? depth[from] + 1 : 0;
             fa[cur] = ~from ? from : ~0uz;
             for (const size_t nxt: edges[cur]) {
                 if (nxt != from) {
-                    self(nxt, cur);
+                    self(self, nxt, cur);
                     size[cur] += size[nxt];
                     if (!~heavy_child[cur] || size[nxt] > size[heavy_child[cur]])
                         heavy_child[cur] = nxt;
                 }
             }
-        }(0uz, ~0uz);
+        };
+        dfs1(dfs1, 0uz, ~0uz);
 
-        [&, time_stamp = 0uz](this auto &&self, const size_t cur, const size_t cur_head) -> void {
+        auto dfs2 = [&, time_stamp = 0uz](auto &&self, const size_t cur, const size_t cur_head) mutable -> void {
             dfn[cur] = time_stamp++;
             head[cur] = cur_head;
             if (~heavy_child[cur])
-                self(heavy_child[cur], cur_head);
+                self(self, heavy_child[cur], cur_head);
             for (const size_t nxt: edges[cur])
                 if (nxt != fa[cur] && nxt != heavy_child[cur])
-                    self(nxt, nxt);
-        }(0uz, 0uz);
+                    self(self, nxt, nxt);
+        };
+        dfs2(dfs2, 0uz, 0uz);
 
         std::vector<G> transformed_data(_size);
         for (size_t i = 0; i < _size; ++i)
