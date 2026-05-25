@@ -1,3 +1,4 @@
+// #define NDEBUG
 #include <iostream>
 #include <vector>
 
