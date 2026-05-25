@@ -8,11 +8,12 @@ struct HLD {
     std::vector<std::vector<size_t> > edges;
     size_t _size;
     std::vector<size_t> depth, fa, size, heavy_child;
-    std::vector<size_t> head, dfn;
+    std::vector<size_t> head, dfn, inv_dfn;
 
     explicit HLD(std::vector<std::vector<size_t> > edges_) : edges(std::move(edges_)), _size(edges.size()),
                                                              depth(_size), fa(_size), size(_size, 1uz),
-                                                             heavy_child(_size, ~0uz), head(_size), dfn(_size) {
+                                                             heavy_child(_size, ~0uz), head(_size), dfn(_size),
+                                                             inv_dfn(_size) {
         auto dfs1 = [&](auto &&self, const size_t cur, const size_t from) -> void {
             depth[cur] = ~from ? depth[from] + 1 : 0;
             fa[cur] = ~from ? from : ~0uz;
@@ -37,6 +38,9 @@ struct HLD {
                     self(self, nxt, nxt);
         };
         dfs2(dfs2, 0uz, 0uz);
+
+        for (size_t i = 0; i < _size; ++i)
+            inv_dfn[dfn[i]] = i;
     }
 
     template<typename Fn>
@@ -68,6 +72,15 @@ struct HLD {
     void subtree_perform(const size_t idx, Fn f) {
         assert(idx < _size);
         return f(dfn[idx], dfn[idx] + size[idx]);
+    }
+
+    size_t LCA(const size_t u, const size_t v) {
+        assert(u < _size && v < _size);
+        size_t ans = ~0uz;
+        seg_perform(u, v, [&](const size_t s, const size_t) {
+            ans = s;
+        });
+        return inv_dfn[ans];
     }
 };
 
