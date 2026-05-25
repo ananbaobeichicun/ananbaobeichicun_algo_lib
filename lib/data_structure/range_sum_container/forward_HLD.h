@@ -1,6 +1,5 @@
 #ifndef FORWARD_HLD_H
 #define FORWARD_HLD_H
-#include <stdexcept>
 #include <vector>
 #include <ranges>
 #include "zkw_seg_tree.h"
@@ -22,30 +21,28 @@ struct forward_HLD {
     explicit forward_HLD(std::vector<std::vector<size_t> > edges_, std::vector<G> data) : edges(std::move(edges_)),
         _size(edges.size()), depth(_size), fa(_size), size(_size, 1uz), heavy_child(_size, ~0uz), head(_size),
         dfn(_size), _seg_tree(0uz) {
-        auto dfs1 = [&](auto &&self, const size_t cur, const size_t from) -> void {
+        [&](this auto &&self, const size_t cur, const size_t from) -> void {
             depth[cur] = ~from ? depth[from] + 1 : 0;
             fa[cur] = ~from ? from : ~0uz;
             for (const size_t nxt: edges[cur]) {
                 if (nxt != from) {
-                    self(self, nxt, cur);
+                    self(nxt, cur);
                     size[cur] += size[nxt];
                     if (!~heavy_child[cur] || size[nxt] > size[heavy_child[cur]])
                         heavy_child[cur] = nxt;
                 }
             }
-        };
-        dfs1(dfs1, 0uz, ~0uz);
+        }(0uz, ~0uz);
 
-        auto dfs2 = [&, time_stamp = 0uz](auto &&self, const size_t cur, const size_t cur_head) mutable -> void {
+        [&, time_stamp = 0uz](this auto &&self, const size_t cur, const size_t cur_head) -> void {
             dfn[cur] = time_stamp++;
             head[cur] = cur_head;
             if (~heavy_child[cur])
-                self(self, heavy_child[cur], cur_head);
+                self(heavy_child[cur], cur_head);
             for (const size_t nxt: edges[cur])
                 if (nxt != fa[cur] && nxt != heavy_child[cur])
-                    self(self, nxt, nxt);
-        };
-        dfs2(dfs2, 0uz, 0uz);
+                    self(nxt, nxt);
+        }(0uz, 0uz);
 
         std::vector<G> transformed_data(_size);
         for (size_t i = 0; i < _size; ++i)
@@ -55,8 +52,7 @@ struct forward_HLD {
     }
 
     G seg_query(size_t u, size_t v) {
-        if (u >= _size || v >= _size)
-            throw std::range_error{""};
+        assert(u < _size && v < _size);
         G ans;
         while (head[u] != head[v]) {
             if (depth[head[u]] > depth[head[v]]) {
@@ -73,8 +69,7 @@ struct forward_HLD {
     }
 
     void seg_modify(size_t u, size_t v, const T &ntag) {
-        if (u >= _size || v >= _size)
-            throw std::range_error{""};
+        assert(u < _size && v < _size);
         while (head[u] != head[v]) {
             if (depth[head[u]] > depth[head[v]]) {
                 _seg_tree.modify(dfn[head[u]], dfn[u] + 1, ntag);
@@ -92,10 +87,12 @@ struct forward_HLD {
     }
 
     G subtree_query(const size_t idx) {
+        assert(idx < _size);
         return _seg_tree.query(dfn[idx], dfn[idx] + size[idx]);
     }
 
     void subtree_modify(const size_t idx, const T &ntag) {
+        assert(idx < _size);
         _seg_tree.modify(dfn[idx], dfn[idx] + size[idx], ntag);
     }
 

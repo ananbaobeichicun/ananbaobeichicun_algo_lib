@@ -1,7 +1,7 @@
 #ifndef ZKW_SEG_TREE_H
 #define ZKW_SEG_TREE_H
-#include <stdexcept>
 #include <vector>
+#include <cassert>
 
 template<typename T, typename G>
     requires requires(T t1, T t2, G g1, G g2)
@@ -50,8 +50,7 @@ public:
     [[nodiscard]] size_t size() const { return used_size; }
 
     void modify(size_t l, size_t r, const T &ntag) {
-        if (l > r || r > used_size)
-            throw std::exception{};
+        assert(l <= r && r <= used_size);
         l += _size;
         r += _size;
         for (size_t i = std::bit_width(_size) - 1; i; --i) {
@@ -85,8 +84,7 @@ public:
     }
 
     G query(size_t l, size_t r) {
-        if (l > r || r > used_size)
-            throw std::exception{};
+        assert(l <= r && r <= used_size);
         l += _size;
         r += _size;
         for (size_t i = std::bit_width(_size) - 1; i; --i) {
