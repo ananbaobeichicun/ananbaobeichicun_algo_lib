@@ -1,10 +1,8 @@
 // #define NDEBUG
-#include <iostream>
-#include <vector>
+#include <bits/stdc++.h>
 
 #ifdef LOCAL_DBG
-#include <print>
-#define dbg(x) do { println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x); } while(false)
+#define dbg(x) println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x)
 #else
 #define dbg(x)
 #endif
@@ -13,7 +11,7 @@ using uc = unsigned char;
 using ll = long long;
 using ull = unsigned long long;
 
-void solve() {
+static void solve() {
     size_t n;
     std::cin >> n;
     std::vector<size_t> v(n);
