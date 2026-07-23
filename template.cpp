@@ -1,5 +1,6 @@
 // #define NDEBUG
 #include <bits/stdc++.h>
+#include <cassert>
 
 #ifdef LOCAL_DBG
 #define dbg(x) println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x)
