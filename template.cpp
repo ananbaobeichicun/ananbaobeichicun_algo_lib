@@ -3,7 +3,7 @@
 #include <cassert>
 
 #ifdef LOCAL_DBG
-#define dbg(x) println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x)
+#define dbg(x) std::println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x)
 #else
 #define dbg(x)
 #endif
