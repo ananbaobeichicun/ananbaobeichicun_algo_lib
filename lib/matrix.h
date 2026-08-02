@@ -6,6 +6,7 @@
 #include <ranges>
 #include <cassert>
 #include "concepts/algebra_concepts.h"
+#include "number/montgomery_32.h"
 
 #define DEFINE_ASSIGNMENT_OPERATOR(struct_name, op, enable_cond) \
 friend struct_name &operator op##=(struct_name &x, const struct_name &y) \
@@ -43,13 +44,13 @@ namespace {
                           } && semiring<typename M::value_type>
                           && requires(M m, const M cm, const typename M::value_type x, size_t r, size_t c)
                           {
-                              { cm.rows() } -> std::convertible_to<std::size_t>;
-                              { cm.cols() } -> std::convertible_to<std::size_t>;
+                              { cm.rows() } -> std::convertible_to<size_t>;
+                              { cm.cols() } -> std::convertible_to<size_t>;
                               { m[r, c] = x } -> std::convertible_to<typename M::value_type &>;
                               { cm[r, c] } -> std::convertible_to<const typename M::value_type &>;
                           };
 
-    namespace impl {
+    namespace matrix_impl {
         template<matrix_like M, typename Fn, matrix_like O>
             requires std::same_as<typename M::value_type, typename O::value_type>
                      && std::invocable<Fn, const typename M::value_type &>
@@ -146,10 +147,10 @@ namespace {
         }
 
         template<matrix_like M>
-        void pow(M m, size_t n, M &ans) {
+        void pow(M m, size_t t, M &ans) {
             assert(m.rows() == m.cols());
-            for (; n; n >>= 1) {
-                if (n & 1)
+            for (; t; t >>= 1) {
+                if (t & 1)
                     ans *= m;
                 m *= m;
             }
@@ -224,7 +225,7 @@ namespace {
                      && std::same_as<std::invoke_result_t<Fn, const T &>, T>
         vector_matrix map(Fn fn) const {
             vector_matrix ans(n, m);
-            impl::map(*this, fn, ans);
+            matrix_impl::map(*this, fn, ans);
             return ans;
         }
 
@@ -234,27 +235,27 @@ namespace {
         static vector_matrix zip(const vector_matrix &x, const vector_matrix &y, Fn fn) {
             assert(x.rows() == y.rows() && x.cols() == y.cols());
             vector_matrix ans(x.rows(), x.cols());
-            impl::zip(x, y, fn, ans);
+            matrix_impl::zip(x, y, fn, ans);
             return ans;
         }
 
         vector_matrix operator+() const {
             vector_matrix ans(n, m);
-            impl::pos(*this, ans);
+            matrix_impl::pos(*this, ans);
             return ans;
         }
 
         vector_matrix operator-() const
             requires ring<T> {
             vector_matrix ans(n, m);
-            impl::neg(*this, ans);
+            matrix_impl::neg(*this, ans);
             return ans;
         }
 
         friend vector_matrix operator+(const vector_matrix &x, const vector_matrix &y) {
             assert(x.rows() == y.rows() && x.cols() == y.cols());
             vector_matrix ans(x.rows(), x.cols());
-            impl::add(x, y, ans);
+            matrix_impl::add(x, y, ans);
             return ans;
         }
 
@@ -262,52 +263,53 @@ namespace {
             requires ring<T> {
             assert(x.rows() == y.rows() && x.cols() == y.cols());
             vector_matrix ans(x.rows(), x.cols());
-            impl::sub(x, y, ans);
+            matrix_impl::sub(x, y, ans);
             return ans;
         }
 
         friend vector_matrix operator*(const vector_matrix &x, const vector_matrix &y) {
             assert(x.cols() == y.rows());
             vector_matrix ans(x.rows(), y.cols());
-            impl::mul(x, y, ans);
+            matrix_impl::mul(x, y, ans);
             return ans;
         }
 
         friend vector_matrix operator*(const T &scalar, const vector_matrix &x) {
             vector_matrix ans(x.rows(), x.cols());
-            impl::scalar_left_mul(scalar, x, ans);
+            matrix_impl::scalar_left_mul(scalar, x, ans);
             return ans;
         }
 
         friend vector_matrix operator*(const vector_matrix &x, const T &scalar) {
             vector_matrix ans(x.rows(), x.cols());
-            impl::scalar_right_mul(x, scalar, ans);
+            matrix_impl::scalar_right_mul(x, scalar, ans);
             return ans;
         }
 
         vector_matrix &operator+=(const vector_matrix &other) {
-            return impl::add_assign(*this, other);
+            return matrix_impl::add_assign(*this, other);
         }
 
         vector_matrix &operator-=(const vector_matrix &other)
             requires ring<T> {
-            return impl::sub_assign(*this, other);
+            return matrix_impl::sub_assign(*this, other);
         }
 
         DEFINE_ASSIGNMENT_OPERATOR(vector_matrix, *, true)
 
-        vector_matrix pow(const size_t n) const {
-            vector_matrix ans = vector_matrix::scalar(this->n);
-            impl::pow(*this, n, ans);
+        vector_matrix pow(const size_t t) const {
+            vector_matrix ans = vector_matrix::scalar(n);
+            matrix_impl::pow(*this, t, ans);
             return ans;
         }
 
         friend bool operator==(const vector_matrix &x, const vector_matrix &y) {
-            return impl::equal(x, y);
+            return matrix_impl::equal(x, y);
         }
-
-        static_assert(matrix_like<vector_matrix>);
     };
+
+    struct from_raw_t {
+    } from_raw;
 
     template<semiring T, size_t N, size_t M>
     struct array_matrix {
@@ -315,6 +317,10 @@ namespace {
         std::array<T, N * M> data;
 
         explicit array_matrix() = default;
+
+        explicit array_matrix(from_raw_t, T *ptr) {
+            std::copy_n(ptr, N * M, data.begin());
+        }
 
         explicit array_matrix(const T &value) {
             data.fill(value);
@@ -368,7 +374,7 @@ namespace {
                      && std::same_as<std::invoke_result_t<Fn, const T &>, T>
         array_matrix map(Fn fn) const {
             array_matrix ans{T::zero()};
-            impl::map(*this, fn, ans);
+            matrix_impl::map(*this, fn, ans);
             return ans;
         }
 
@@ -377,55 +383,55 @@ namespace {
                      && std::same_as<std::invoke_result_t<Fn, const T &, const T &>, T>
         static array_matrix zip(const array_matrix &x, const array_matrix &y, Fn fn) {
             array_matrix ans{T::zero()};
-            impl::zip(x, y, fn, ans);
+            matrix_impl::zip(x, y, fn, ans);
             return ans;
         }
 
         array_matrix operator+() const {
             array_matrix ans{T::zero()};
-            impl::pos(*this, ans);
+            matrix_impl::pos(*this, ans);
             return ans;
         }
 
         array_matrix operator-() const
             requires ring<T> {
             array_matrix ans{T::zero()};
-            impl::neg(*this, ans);
+            matrix_impl::neg(*this, ans);
             return ans;
         }
 
         friend array_matrix operator+(const array_matrix &x, const array_matrix &y) {
             array_matrix ans{T::zero()};
-            impl::add(x, y, ans);
+            matrix_impl::add(x, y, ans);
             return ans;
         }
 
         friend array_matrix operator-(const array_matrix &x, const array_matrix &y)
             requires ring<T> {
             array_matrix ans{T::zero()};
-            impl::sub(x, y, ans);
+            matrix_impl::sub(x, y, ans);
             return ans;
         }
 
         friend array_matrix operator*(const T &scalar, const array_matrix &x) {
             array_matrix ans{T::zero()};
-            impl::scalar_left_mul(scalar, x, ans);
+            matrix_impl::scalar_left_mul(scalar, x, ans);
             return ans;
         }
 
         friend array_matrix operator*(const array_matrix &x, const T &scalar) {
             array_matrix ans{T::zero()};
-            impl::scalar_right_mul(x, scalar, ans);
+            matrix_impl::scalar_right_mul(x, scalar, ans);
             return ans;
         }
 
         array_matrix &operator+=(const array_matrix &other) {
-            return impl::add_assign(*this, other);
+            return matrix_impl::add_assign(*this, other);
         }
 
         array_matrix &operator-=(const array_matrix &other)
             requires ring<T> {
-            return impl::sub_assign(*this, other);
+            return matrix_impl::sub_assign(*this, other);
         }
 
         DEFINE_ASSIGNMENT_OPERATOR(array_matrix, *, N == M)
@@ -433,21 +439,19 @@ namespace {
         array_matrix pow(const size_t n) const
             requires (N == M) {
             array_matrix ans = array_matrix::scalar();
-            impl::pow(*this, n, ans);
+            matrix_impl::pow(*this, n, ans);
             return ans;
         }
 
         friend bool operator==(const array_matrix &x, const array_matrix &y) {
-            return impl::equal(x, y);
+            return matrix_impl::equal(x, y);
         }
-
-        static_assert(matrix_like<array_matrix>);
     };
 
     template<semiring T, size_t P, size_t Q, size_t R>
     array_matrix<T, P, R> operator*(const array_matrix<T, P, Q> &x, const array_matrix<T, Q, R> &y) {
         array_matrix<T, P, R> ans{T::zero()};
-        impl::mul(x, y, ans);
+        matrix_impl::mul(x, y, ans);
         return ans;
     }
 }
