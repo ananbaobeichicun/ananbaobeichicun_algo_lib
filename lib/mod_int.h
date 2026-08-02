@@ -56,6 +56,14 @@ struct mod_int {
     constexpr explicit operator T() const {
         return data;
     }
+
+    static mod_int zero() {
+        return {0};
+    }
+
+    static mod_int identity() {
+        return {1};
+    }
 };
 
 template<std::unsigned_integral T, T MOD>
@@ -155,7 +163,7 @@ constexpr mod_int<T, MOD> operator/(const mod_int<T, MOD> x, const mod_int<T, MO
     return x * y.inv();
 }
 
-#define DEFINE_MIXED_OPERATOR(op) \
+#define DEFINE_OPERATOR(op) \
 template<std::unsigned_integral T, T MOD> \
 constexpr mod_int<T, MOD> operator op (const T x, const mod_int<T, MOD> y) { \
     return mod_int<T, MOD>{x} op y; \
@@ -164,27 +172,22 @@ constexpr mod_int<T, MOD> operator op (const T x, const mod_int<T, MOD> y) { \
 template<std::unsigned_integral T, T MOD> \
 constexpr mod_int<T, MOD> operator op (const mod_int<T, MOD> x, const T y) { \
     return x op mod_int<T, MOD>{y}; \
-}
-
-DEFINE_MIXED_OPERATOR(+)
-DEFINE_MIXED_OPERATOR(-)
-DEFINE_MIXED_OPERATOR(*)
-DEFINE_MIXED_OPERATOR(/)
-
-#define DEFINE_ASSIGNMENT_OPERATOR(op, assignment_op) \
+} \
+ \
 template<std::unsigned_integral T, T MOD> \
-constexpr mod_int<T, MOD> &operator assignment_op(mod_int<T, MOD> &x, const mod_int<T, MOD> y) { \
+constexpr mod_int<T, MOD> &operator op##=(mod_int<T, MOD> &x, const mod_int<T, MOD> y) { \
     return x = x op y; \
 } \
  \
 template<std::unsigned_integral T, T MOD> \
-constexpr mod_int<T, MOD> &operator assignment_op(mod_int<T, MOD> &x, const T y) { \
-    return x assignment_op mod_int<T, MOD>{y}; \
+constexpr mod_int<T, MOD> &operator op##=(mod_int<T, MOD> &x, const T y) { \
+    return x op##= mod_int<T, MOD>{y}; \
 }
-DEFINE_ASSIGNMENT_OPERATOR(+, +=)
-DEFINE_ASSIGNMENT_OPERATOR(-, -=)
-DEFINE_ASSIGNMENT_OPERATOR(*, *=)
-DEFINE_ASSIGNMENT_OPERATOR(/, /=)
+
+DEFINE_OPERATOR(+)
+DEFINE_OPERATOR(-)
+DEFINE_OPERATOR(*)
+DEFINE_OPERATOR(/)
 
 template<std::unsigned_integral T, T MOD>
 constexpr mod_int<T, MOD> qpow(mod_int<T, MOD> x, T y) {
