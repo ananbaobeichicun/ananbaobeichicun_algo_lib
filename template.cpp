@@ -2,10 +2,12 @@
 #include <bits/stdc++.h>
 #include <cassert>
 
-#ifdef LOCAL_DBG
+#if defined(LOCAL_DBG) && !defined(ONLINE_JUDGE)
 #define dbg(x) std::println(std::cerr, "\x1b[94m{}:\x1b[39;49m {}", #x, x)
+#include "lib/third_party/nanobench.h"
 #else
 #define dbg(x)
+#define size_t ull
 #endif
 
 using uc = unsigned char;
