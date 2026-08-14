@@ -48,7 +48,7 @@ struct HLD {
         {
             { f(u, v) };
         }
-    void seg_perform(size_t u, size_t v, Fn f) {
+    void seg_perform(size_t u, size_t v, Fn f) const {
         assert(u < _size && v < _size);
         while (head[u] != head[v]) {
             if (depth[head[u]] > depth[head[v]]) {
@@ -69,12 +69,12 @@ struct HLD {
         {
             { f(u, v) };
         }
-    void subtree_perform(const size_t idx, Fn f) {
+    void subtree_perform(const size_t idx, Fn f) const {
         assert(idx < _size);
         return f(dfn[idx], dfn[idx] + size[idx]);
     }
 
-    size_t LCA(const size_t u, const size_t v) {
+    [[nodiscard]] size_t LCA(const size_t u, const size_t v) const {
         assert(u < _size && v < _size);
         size_t ans = ~0uz;
         seg_perform(u, v, [&](const size_t s, const size_t) {
