@@ -3,7 +3,6 @@
 #include <vector>
 #include <cassert>
 #include <functional>
-#include <bits/random.tcc>
 
 namespace {
     // 要求T{}和G{}必须是单位元
@@ -131,54 +130,54 @@ namespace {
 
         template<std::predicate<const G &> Fn>
         std::pair<size_t, G> max_right(const size_t l, Fn f) {
+            assert(std::invoke(f, G{}));
             if (l == used_size) return {used_size, G{}};
             assert(l <= used_size);
-            size_t ll = l + _size;
-            push_down_ancestors(ll);
+            size_t p = l + _size;
+            push_down_ancestors(p);
 
             G acc;
-            while (ll) {
-                if (!std::invoke(f, acc + data[ll])) break;
-                if (ll & 1) {
-                    acc = acc + data[ll++];
-                    if (std::has_single_bit(ll)) return {used_size, query(l, used_size)};
-                } else {
-                    ll >>= 1;
+            do {
+                while (!(p & 1)) p >>= 1;
+
+                if (!std::invoke(f, acc + data[p])) {
+                    while (p < _size) {
+                        push_down(p);
+                        if (std::invoke(f, acc + data[p <<= 1])) acc = acc + data[p++];
+                    }
+
+                    return {p - _size, acc};
                 }
-            }
+                acc = acc + data[p++];
+            } while (!std::has_single_bit(p));
 
-            while (ll < _size) {
-                push_down(ll);
-                if (std::invoke(f, acc + data[ll <<= 1])) acc = acc + data[ll++];
-            }
-
-            return {ll - _size, acc};
+            return {used_size, acc};
         }
 
         template<std::predicate<const G &> Fn>
         std::pair<size_t, G> min_left(const size_t r, Fn f) {
+            assert(std::invoke(f, G{}));
             if (!r) return {0, G{}};
             assert(r <= used_size);
-            size_t rr = r + _size - 1;
-            push_down_ancestors(rr);
+            size_t p = r + _size - 1;
+            push_down_ancestors(p);
 
             G acc;
-            while (rr) {
-                if (!std::invoke(f, data[rr] + acc)) break;
-                if (!(rr & 1)) {
-                    acc = data[rr--] + acc;
-                    if (std::__is_power_of_2_less_1(rr)) return {0, query(0, r)};
-                } else {
-                    rr >>= 1;
+            do {
+                while (p > 1 && p & 1) p >>= 1;
+
+                if (!std::invoke(f, data[p] + acc)) {
+                    while (p < _size) {
+                        push_down(p);
+                        if (std::invoke(f, data[(p <<= 1) |= 1] + acc)) acc = data[p--] + acc;
+                    }
+
+                    return {p - _size + 1, acc};
                 }
-            }
+                acc = data[p--] + acc;
+            } while (!std::has_single_bit(p + 1));
 
-            while (rr < _size) {
-                push_down(rr);
-                if (std::invoke(f, data[rr = rr << 1 | 1] + acc)) acc = data[rr--] + acc;
-            }
-
-            return {rr - _size + 1, acc};
+            return {0, acc};
         }
     };
 }
