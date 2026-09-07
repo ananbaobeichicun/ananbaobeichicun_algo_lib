@@ -52,8 +52,7 @@ namespace {
                      && std::indirectly_copyable<std::ranges::iterator_t<const R &>, typename std::vector<G>::iterator>
         explicit zkw_seg_tree(const R &r) : zkw_seg_tree(r.size()) {
             std::copy(r.begin(), r.end(), data.begin() + (ptrdiff_t) _size);
-            for (size_t i = _size - 1; i; --i)
-                data[i] = data[i << 1] + data[i << 1 | 1];
+            push_up_all();
         }
 
         [[nodiscard]] size_t size() const { return used_size; }
@@ -103,7 +102,7 @@ namespace {
             push_down_ancestors(l);
             push_down_ancestors(r);
 
-            G ansl, ansr;
+            G ansl{}, ansr{};
             for (; l < r; l >>= 1, r >>= 1) {
                 if (l & 1) ansl = ansl + data[l++];
                 if (r & 1) ansr = data[--r] + ansr;
@@ -112,21 +111,18 @@ namespace {
             return ansl + ansr;
         }
 
-        // untested!!
-        void resolve_all_tags() {
+        void push_down_all() {
             for (size_t i = 1; i < _size; ++i) push_down(i);
-            for (size_t i = _size - 1; i; --i) push_up(i);
         }
 
-        // untested!!
-        G &get_unchecked(const size_t idx) {
-            return data[idx + _size];
+        // unsafe: 需要树上所有tag需是单位元T{}
+        void push_up_all() {
+            for (size_t i = _size - 1; i; --i) data[i] = data[i << 1] + data[i << 1 | 1];
         }
 
-        // untested!!
-        [[nodiscard]] const G &get_unchecked(const size_t idx) const {
-            return data[idx + _size];
-        }
+        G &get_unchecked(const size_t idx) { return data[idx + _size]; }
+
+        [[nodiscard]] const G &get_unchecked(const size_t idx) const { return data[idx + _size]; }
 
         template<std::predicate<const G &> Fn>
         std::pair<size_t, G> max_right(const size_t l, Fn f) {
@@ -136,7 +132,7 @@ namespace {
             size_t p = l + _size;
             push_down_ancestors(p);
 
-            G acc;
+            G acc{};
             do {
                 while (!(p & 1)) p >>= 1;
 
@@ -162,7 +158,7 @@ namespace {
             size_t p = r + _size - 1;
             push_down_ancestors(p);
 
-            G acc;
+            G acc{};
             do {
                 while (p > 1 && p & 1) p >>= 1;
 
