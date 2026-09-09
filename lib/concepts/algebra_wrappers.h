@@ -1,6 +1,7 @@
 #ifndef UNTITLED_ALGEBRA_WRAPPERS_H
 #define UNTITLED_ALGEBRA_WRAPPERS_H
 #include <utility>
+#include <functional>
 #include "algebra_concepts.h"
 
 // NOLINTBEGIN(bugprone-reserved-identifier)
@@ -22,6 +23,10 @@ struct semigroup_wrapper {
 
     semigroup_wrapper(T data) : data(std::move(data)) {
         static_assert(semigroup<semigroup_wrapper>);
+    }
+
+    friend semigroup_wrapper operator+(const semigroup_wrapper &x) {
+        return x;
     }
 
     friend semigroup_wrapper operator+(const semigroup_wrapper &x, const semigroup_wrapper &y) {
@@ -62,6 +67,10 @@ struct semiring_wrapper {
         return {_Identity};
     }
 
+    friend semiring_wrapper operator+(const semiring_wrapper &x) {
+        return x;
+    }
+
     friend semiring_wrapper operator+(const semiring_wrapper &x, const semiring_wrapper &y) {
         return {_Plus{}(x.data, y.data)};
     }
@@ -77,6 +86,37 @@ struct semiring_wrapper {
     friend semiring_wrapper &operator*=(semiring_wrapper &x, const semiring_wrapper &y) {
         return x = x * y;
     }
+};
+
+template<typename T, typename _Plus, T _Zero, typename _Neg, typename _Multiplies, T _Identity>
+    requires requires(T x, T y, _Plus plus, _Neg neg, _Multiplies multiplies)
+    {
+        { plus(x, y) } -> std::convertible_to<T>;
+        { neg(x) } -> std::convertible_to<T>;
+        { multiplies(x, y) } -> std::convertible_to<T>;
+    }
+struct ring_wrapper : semiring_wrapper<T, _Plus, _Zero, _Multiplies, _Identity> {
+    using value_type = T;
+    using plus = _Plus;
+    using multiplies = _Multiplies;
+
+    T data;
+
+    friend ring_wrapper operator-(const ring_wrapper &x) {
+        return {_Neg{}(x.data)};
+    }
+
+    friend ring_wrapper operator-(const ring_wrapper &x, const ring_wrapper &y) {
+        return x + (-y);
+    }
+
+    friend ring_wrapper operator-=(const ring_wrapper &x, const ring_wrapper &y) {
+        return x = x - y;
+    }
+};
+
+template<std::integral T>
+struct integral_ring_wrapper : ring_wrapper<T, std::plus<T>, T{0}, std::negation<T>, std::multiplies<T>, T{1}> {
 };
 
 // NOLINTEND(bugprone-reserved-identifier)

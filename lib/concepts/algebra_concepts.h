@@ -20,7 +20,7 @@ concept semigroup = requires(T x, T y)
 template<typename T>
 concept monoid = semigroup<T> && requires
 {
-    { T::identity() } -> std::convertible_to<T>;
+    { T::zero() } -> std::convertible_to<T>;
     // axiom(T x): x + T::identity == x && T::identity + x == x
 };
 
