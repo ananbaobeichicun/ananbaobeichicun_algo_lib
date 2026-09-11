@@ -94,7 +94,6 @@ private:
         push_down(p);
         resolve_all_tags(p << 1);
         resolve_all_tags(p << 1 | 1);
-        push_up(p);
     }
 
 public:
@@ -132,17 +131,14 @@ public:
         return std::min(res, used_size);
     }
 
-    // untested!!
     void resolve_all_tags() {
         _resolve_all_tags(1);
     }
 
-    // untested!!
     G &get_unchecked(const size_t idx) {
         return data[idx + _size];
     }
 
-    // untested!!
     const G &get_unchecked(const size_t idx) const {
         return data[idx + _size];
     }
