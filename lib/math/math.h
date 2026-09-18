@@ -56,6 +56,11 @@ constexpr static T saturating_sub(const T x, const T y) {
     return x > y ? x - y : 0;
 }
 
+template<std::signed_integral T>
+constexpr T euclid_mod(const T a, const T b) {
+    return (a % b + std::abs(b)) % b;
+}
+
 template<std::unsigned_integral T>
 static T floor_tmxd(std::vector<T> v, const T k) {
     const size_t n = v.size();

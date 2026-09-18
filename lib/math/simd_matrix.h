@@ -5,7 +5,7 @@
 #include <immintrin.h>
 #include <new>
 #include <algorithm>
-#include "number/montgomery_32.h"
+#include "../number/montgomery_32.h"
 
 #pragma GCC push_options
 #pragma GCC target("sse3", "sse2", "sse", "sse4", "sse4.1", "sse4.2", "ssse3", "avx2", "avx512f", "avx512dq", "avx512vl")

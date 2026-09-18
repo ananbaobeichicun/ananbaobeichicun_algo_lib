@@ -5,8 +5,8 @@
 #include <concepts>
 #include <ranges>
 #include <cassert>
-#include "concepts/algebra_concepts.h"
-#include "number/montgomery_32.h"
+#include "../concepts/algebra_concepts.h"
+#include "../number/montgomery_32.h"
 
 #define DEFINE_ASSIGNMENT_OPERATOR(struct_name, op, enable_cond) \
 friend struct_name &operator op##=(struct_name &x, const struct_name &y) \

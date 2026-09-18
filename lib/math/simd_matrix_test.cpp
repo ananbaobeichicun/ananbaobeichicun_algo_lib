@@ -1,6 +1,6 @@
 // #define NDEBUG
 #include <bits/stdc++.h>
-#include "mod_int.h"
+#include "../mod_int.h"
 #include "matrix.h"
 #include "simd_matrix.h"
 

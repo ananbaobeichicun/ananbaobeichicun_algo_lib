@@ -33,7 +33,7 @@ public:
         data.reserve(s);
     }
 
-    u_big_int(const std::initializer_list<ull> &v): data(v)
+    u_big_int(const std::initializer_list<ull> &v): data(v) {
     }
 
     explicit u_big_int(std::string_view str) {

@@ -6,11 +6,11 @@
 constexpr std::vector<size_t> get_rev(const size_t n) {
     std::vector<size_t> ans(1 << n);
     for (size_t i = 0; i < 1 << n; ++i)
-        ans[i] = ans[i >> 1] >> 1 | (i & 1) << n - 1;
+        ans[i] = ans[i >> 1] >> 1 | (i & 1) << (n - 1);
     return ans;
 }
 
-void FFT(std::vector<std::complex<double> > &vec, const bool is_normal) {
+static void FFT(std::vector<std::complex<double> > &vec, const bool is_normal) {
     const size_t n = vec.size();
     const std::vector<size_t> rev = get_rev(std::__lg(n));
     for (size_t i = 0; i < n; ++i)
@@ -20,7 +20,6 @@ void FFT(std::vector<std::complex<double> > &vec, const bool is_normal) {
     constexpr double pi = std::numbers::pi;
 
     for (size_t i = 2; i <= n; i <<= 1) {
-        // NOLINT(*-narrowing-conversions)
         const std::complex<double> w1 = is_normal
                                             ? std::complex(cos(2 * pi / i), sin(2 * pi / i))
                                             : std::complex(cos(2 * pi / i), -sin(2 * pi / i));
