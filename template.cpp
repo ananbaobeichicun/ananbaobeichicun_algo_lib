@@ -27,6 +27,7 @@ static void solve() {
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
+    std::cout << std::fixed << std::setprecision(20);
     // int size(256 << 20); // 256M
     // __asm__ ( "movq %0, %%rsp\n"::"r"((char *) malloc(size) + size));
 
@@ -35,5 +36,5 @@ int main() {
     while (t--)
         solve();
 
-    exit(EXIT_SUCCESS);
+    std::exit(EXIT_SUCCESS);
 }
