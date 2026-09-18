@@ -1,5 +1,5 @@
-#ifndef COMPETITIVE_PROGRAMMING_LINEAR_PROGRAMMING_H
-#define COMPETITIVE_PROGRAMMING_LINEAR_PROGRAMMING_H
+#ifndef LINEAR_PROGRAMMING_H
+#define LINEAR_PROGRAMMING_H
 #include <vector>
 #include <numeric>
 #include <algorithm>
@@ -141,4 +141,4 @@ namespace {
     }
 }
 
-#endif //COMPETITIVE_PROGRAMMING_LINEAR_PROGRAMMING_H
+#endif //LINEAR_PROGRAMMING_H
