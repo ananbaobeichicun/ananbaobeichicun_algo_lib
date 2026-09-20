@@ -13,6 +13,7 @@
 using uc = unsigned char;
 using ll = long long;
 using ull = unsigned long long;
+using ld = long double;
 
 static void solve() {
     size_t n;
