@@ -2,9 +2,6 @@
 #include <cstdint>
 
 int main() {
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-
     uint64_t x = 1;
     constexpr size_t BATCH = 1e9;
     for (size_t i = 0; i < BATCH; ++i) {
