@@ -7,12 +7,12 @@
 #include "lib/third_party/nanobench.h"
 #else
 #define dbg(x)
-#define size_t ull
+#define size_t uint64_t
 #endif
 
 using uc = unsigned char;
-using ll = long long;
-using ull = unsigned long long;
+using ll = int64_t;
+using ull = uint64_t;
 using ld = long double;
 
 static void solve() {
